@@ -26,20 +26,28 @@ st.write("This interactive dashboard lets you explore the Titanic dataset and ma
 st.sidebar.header("Filter Data")
 pclass = st.sidebar.selectbox("Passenger Class", options=[1, 2, 3])
 sex = st.sidebar.radio("Sex", options=["male", "female"])
+sex_code = 1 if sex == "female" else 0  # Convert to match dataset
 age = st.sidebar.slider("Age", min_value=0, max_value=80, value=30)
 fare = st.sidebar.slider("Fare", min_value=0.0, max_value=600.0, value=50.0)
 sibsp = st.sidebar.slider("Siblings/Spouses Aboard", 0, 5, 0)
 parch = st.sidebar.slider("Parents/Children Aboard", 0, 5, 0)
+embarked = st.sidebar.selectbox("Port of Embarkation", ["C", "Q", "S"])
+
+# Dummy variables for embarqued
+embq = 1 if embarked == "Q" else 0
+embs = 1 if embarked == "S" else 0
 
 # Filtered dataset display
 st.subheader("Filtered Dataset")
-filtered_df = df[(df['Pclass'] == pclass) & (df['Sex'] == sex)]
+filtered_df = df[(df['Pclass'] == pclass) & (df['Sex'] == sex_code)]
 st.dataframe(filtered_df.head())
+
 
 # Plot survival by sex and class
 st.subheader("Survival Rate by Sex and Class")
 fig = px.histogram(df, x="Sex", color="Survived", barmode="group", facet_col="Pclass", category_orders={"Pclass": [1,2,3]})
 st.plotly_chart(fig)
+
 
 # Prediction section
 st.subheader("🎯 Predict Survival")
@@ -54,6 +62,11 @@ if model:
         "Embarked_Q": [embq],
         "Embarked_S": [embs]
     })
+
+    # Force column order to match model
+    expected_columns = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked_Q','Embarked_S']
+    input_df = input_df.reindex(columns=expected_columns)
+
     prediction = model.predict(input_df)[0]
     prob = model.predict_proba(input_df)[0][1]
 
